@@ -1,50 +1,80 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "../../hooks/useForm";
 import { Global } from "../../util/Global";
 import axios from "axios";
+import useAuth from "../../hooks/useAuth";
 
 export const Register = () => {
   useEffect(() => {
     document.body.classList.add("bg-register");
     return () => {
-      document.body.classList.remove("bg-register"); // Limpia la clase cuando el componente se desmonta
+      document.body.classList.remove("bg-register");
     };
   }, []);
 
   const { form, changed } = useForm({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const { auth } = useAuth();
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (auth?._id) {
+      navigate("/auth");
+    }
+  }, [auth, navigate]);
 
   const registerUser = async (e) => {
     e.preventDefault();
-    setError(""); // Limpiar errores previos
+    setError("");
     setLoading(true);
 
     try {
-      const formData = new FormData(); // Crear un objeto FormData para enviar archivos
+      const formData = new FormData();
       for (const key in form) {
-        formData.append(key, form[key]); // Agregar cada campo al FormData
+        formData.append(key, form[key]);
       }
 
       const response = await axios.post(
         `${Global.URL}registro/usuario`,
         formData,
-        { headers: { "Content-Type": "multipart/form-data" } } // Asegúrate de que el tipo de contenido sea multipart/form-data
+        { 
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true
+        }
       );
 
       if (response.status === 201) {
+        setSuccess(true);
         const formulario = document.querySelector("#create");
         formulario.reset();
-        navigate("/");
+        
+        // Redirigir al login después de 2 segundos
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
       }
-    } catch {
-      setError("Error al crear un nuevo Usuario.");
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Error al crear un nuevo Usuario.";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
+  // Limpiar mensajes después de 5 segundos
+  useEffect(() => {
+    if (error || success) {
+      const timer = setTimeout(() => {
+        setError("");
+        setSuccess(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, success]);
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100 py-5">
@@ -87,6 +117,13 @@ export const Register = () => {
                   <div className="alert alert-danger d-flex align-items-center mb-4">
                     <i className="fas fa-exclamation-triangle me-2"></i>
                     {error}
+                  </div>
+                )}
+
+                {success && (
+                  <div className="alert alert-success d-flex align-items-center mb-4">
+                    <i className="fas fa-check-circle me-2"></i>
+                    ¡Cuenta creada exitosamente! Redirigiendo al login...
                   </div>
                 )}
                 
@@ -170,7 +207,7 @@ export const Register = () => {
                 
                 <button
                   type="submit"
-                  className="btn btn-primary btn-lg w-100 hover-lift"
+                  className="btn btn-primary btn-lg w-100 mb-3 hover-lift"
                   disabled={loading}
                 >
                   {loading ? (
@@ -185,6 +222,14 @@ export const Register = () => {
                     </>
                   )}
                 </button>
+
+                <div className="text-center">
+                  <p className="text-muted mb-2">¿Ya tienes una cuenta?</p>
+                  <Link className="btn btn-outline-primary w-100 hover-lift" to="/login">
+                    <i className="fas fa-sign-in-alt me-2"></i>
+                    Iniciar Sesión
+                  </Link>
+                </div>
               </form>
             </div>
           </div>

@@ -1,24 +1,9 @@
-import { useEffect } from "react";
 import { Header } from "./Header";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import useAuth from "../../../hooks/useAuth";
+import { Outlet, useLocation } from "react-router-dom";
 import { Footer } from "./Footer";
 
 export const PublicLayout = () => {
-  const { auth, loading } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation(); // Obtener la ubicación actual
-
-  useEffect(() => {
-    if (!loading) {
-      if (auth._id) {
-        // Si el usuario está autenticado, redirigir a la página de autenticación
-        navigate("/auth");
-      }
-    }
-  }, [auth, loading, navigate]);
-
-  if (loading) return <div>Loading...</div>; // Muestra un loading mientras se verifica la autenticación
+  const location = useLocation();
 
   // Verificar si la ruta actual es la de perfil
   const isProfileRoute = location.pathname.includes("/perfil/");

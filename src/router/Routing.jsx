@@ -15,33 +15,18 @@ export const Routing = () => {
       <AuthProvider>
         <DynamicTitle />
         <Routes>
+          {/* Rutas públicas */}
           <Route path="/" element={<PublicLayout />}>
             <Route index element={<RandomUserGallery />} />
             <Route path="login" element={<Login />} />
             <Route path="registro" element={<Register />} />
-            <Route
-              path="perfil/:nameUser"
-              element={
-                <>
-                  <DynamicTitle />
-                  <Perfil />
-                </>
-              }
-            />
+            <Route path="perfil/:nameUser" element={<Perfil />} />
           </Route>
 
+          {/* Rutas privadas (autenticadas) */}
           <Route path="/auth" element={<PrivateLayout />}>
             <Route index element={<RandomUserGallery />} />
-            <Route
-              path="perfil/:nameUser"
-              element={
-                <>
-                  <DynamicTitle />
-                  <Perfil />
-                </>
-              }
-            />
-            <Route path="registro" element={<Register />} />
+            <Route path="perfil/:nameUser" element={<Perfil />} />
             <Route path="logout" element={<Logout />} />
           </Route>
         </Routes>

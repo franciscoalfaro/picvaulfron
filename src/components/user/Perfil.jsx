@@ -10,24 +10,21 @@ import CarouselRegister from "../CarouselRegister";
 
 export const Perfil = () => {
   const { nameUser } = useParams();
-  const { auth } = useAuth();
+  const { auth, token } = useAuth();
   const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const [showImageRegistration, setShowImageRegistration] = useState(false); // Estado para controlar la visibilidad del formulario
-  const [showGalleryRegistration, setShowGalleryRegistration] = useState(false); // Estado para controlar la visibilidad del formulario de galería
+  const [showImageRegistration, setShowImageRegistration] = useState(false);
+  const [showGalleryRegistration, setShowGalleryRegistration] = useState(false);
 
   useEffect(() => {
     const axiosUserData = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
         let response;
-        // Función para obtener el valor de una cookie por su nombre
-        const getCookie = (tokenName) => {
-          const value = `; ${document.cookie}`;
-          const parts = value.split(`; ${tokenName}=`);
-          if (parts.length === 2) return parts.pop().split(";").shift();
-        };
-
-        const token = getCookie("token"); // Obtiene el token de la cookie
 
         // Si no está autenticado o si está autenticado pero el usuario en la URL no corresponde al usuario logueado,
         // usamos el endpoint público. De lo contrario, usamos el endpoint privado.
@@ -48,27 +45,75 @@ export const Perfil = () => {
         if (response.status === 200) {
           setUserData(response.data.data);
         }
-      } catch {
-        navigate("/404");
+      } catch (err) {
+        console.error("Error loading user data:", err);
+        setError("Usuario no encontrado");
+        // Redirigir después de un breve delay
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      } finally {
+        setLoading(false);
       }
     };
-    axiosUserData();
-  }, [nameUser, auth, navigate]);
+    
+    if (nameUser) {
+      axiosUserData();
+    }
+  }, [nameUser, auth, navigate, token]);
 
   const handleLogout = () => {
-    navigate("/auth/logout");
+    if (auth.nameUser) {
+      navigate("/auth/logout");
+    } else {
+      navigate("/logout");
+    }
   };
 
   const toggleImageRegistration = () => {
     setShowImageRegistration((prev) => !prev);
+    setShowGalleryRegistration(false); // Cerrar el otro formulario
   };
 
   const toggleGalleryRegistration = () => {
     setShowGalleryRegistration((prev) => !prev);
+    setShowImageRegistration(false); // Cerrar el otro formulario
   };
 
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status" style={{width: '3rem', height: '3rem'}}>
+            <span className="visually-hidden">Cargando perfil...</span>
+          </div>
+          <p className="mt-3 text-muted">Cargando perfil de {nameUser}...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mt-5">
+        <div className="alert alert-danger text-center">
+          <i className="fas fa-exclamation-triangle me-2"></i>
+          {error}
+          <p className="mt-2 mb-0">Redirigiendo al inicio...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!userData) {
-    return <div>Cargando perfil...</div>;
+    return (
+      <div className="container mt-5">
+        <div className="alert alert-warning text-center">
+          <i className="fas fa-info-circle me-2"></i>
+          No se pudieron cargar los datos del usuario.
+        </div>
+      </div>
+    );
   }
 
   const isOwnProfile = auth?.nameUser === nameUser;
@@ -99,11 +144,9 @@ export const Perfil = () => {
           <i className="icon ion-md-albums mx-3 lead"></i>Galerías
         </a>
         {auth.nameUser ? (
-          <>
-            <Link to="/auth" className="text-light fw-bold d-block mb-3">
-              <i className="icon ion-md-home mx-3 lead"></i>Inicio
-            </Link>
-          </>
+          <Link to="/auth" className="text-light fw-bold d-block mb-3">
+            <i className="icon ion-md-home mx-3 lead"></i>Inicio
+          </Link>
         ) : (
           <a href="/" className="text-light fw-bold d-block mb-3">
             <i className="icon ion-md-home mx-3 lead"></i>Inicio
@@ -143,7 +186,7 @@ export const Perfil = () => {
                   ? "Bienvenido: " + userData.nameUser
                   : `Perfil de ${userData.nameUser}`}
               </h1>
-              <p className="text-muted mt-5">{userData.userInfo}</p>
+              <p className="text-muted mt-5">{userData.userInfo || "Sin información adicional"}</p>
             </div>
             <div className="col-lg-8">
               {userData.profileImage && (
@@ -151,6 +194,11 @@ export const Perfil = () => {
                   src={`${Upload.URL}uploads/${userData.profileImage}`}
                   className="img-testimonio rounded-circle"
                   alt="Foto de perfil"
+                  style={{
+                    width: '150px',
+                    height: '150px',
+                    objectFit: 'cover'
+                  }}
                 />
               )}
             </div>
@@ -174,7 +222,7 @@ export const Perfil = () => {
             <ImageRegistration galleries={userData.galleries || []} />
           ) : (
             <ImagePerfil
-              images={userData.images}
+              images={userData.images || []}
               userName={userData.nameUser}
               galleriesPerfil={userData.galleries || []}
             />
@@ -189,14 +237,14 @@ export const Perfil = () => {
               <button
                 className="fs-4 btn btn-marca btn-lg rounded-circle mx-auto mb-3"
                 id="btn-galeria"
-                onClick={toggleGalleryRegistration} // Cambiar la visibilidad al hacer clic
+                onClick={toggleGalleryRegistration}
               >
                 <i className="icon ion-md-add-circle icon-large text-white"></i>
               </button>
             )}
           </div>
           {showGalleryRegistration ? (
-            <CarouselRegister images={userData.images || []} /> // Mostrar el formulario de registro de galería
+            <CarouselRegister images={userData.images || []} />
           ) : (
             <CarouselPerfil
               galleries={userData.galleries || []}

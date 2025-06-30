@@ -3,41 +3,46 @@ import useAuth from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Global } from "../util/Global";
-import Cookies from "js-cookie";
 
 export const Logout = () => {
-  const { setAuth } = useAuth();
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const logout = async () => {
+    const performLogout = async () => {
       try {
         // Realiza la solicitud de cierre de sesión al backend
         await axios.post(
           `${Global.URL}logout`,
           {},
           {
-            withCredentials: true, // Si tu backend usa cookies
+            withCredentials: true,
           }
         );
-
-        // Limpiar el almacenamiento local y el estado de autenticación
-        localStorage.removeItem("user");
-        Cookies.remove("token"); // Asegúrate de eliminar el token de las cookies
-        setAuth({}); // Restablecer el estado de autenticación
-
+      } catch (error) {
+        console.error("Error al cerrar sesión en el servidor:", error);
+        // Continúa con el logout local aunque falle el servidor
+      } finally {
+        // Siempre ejecutar el logout local
+        logout();
         // Redirigir a la página de inicio
         navigate("/");
-      } catch (error) {
-        console.error("Error al cerrar sesión:", error);
-        // Aquí podrías mostrar un mensaje de error al usuario si lo deseas
       }
     };
 
-    logout();
-  }, [setAuth, navigate]); // Agrega las dependencias necesarias
+    performLogout();
+  }, [logout, navigate]);
 
-  return <div>Cerrando sesión...</div>;
+  return (
+    <div className="d-flex justify-content-center align-items-center min-vh-100">
+      <div className="text-center">
+        <div className="spinner-border text-primary" role="status" style={{width: '3rem', height: '3rem'}}>
+          <span className="visually-hidden">Cerrando sesión...</span>
+        </div>
+        <p className="mt-3 text-muted">Cerrando sesión...</p>
+      </div>
+    </div>
+  );
 };
 
 export default Logout;

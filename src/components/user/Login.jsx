@@ -18,31 +18,47 @@ export const Login = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth(); // Obtén la función login del contexto
+  const { login, auth } = useAuth();
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (auth?._id) {
+      navigate("/auth");
+    }
+  }, [auth, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(""); // Limpiar errores previos
-    setLoading(true); // Indicar que la solicitud está en curso
+    setError("");
+    setLoading(true);
 
     try {
-      const response = await axios.post(Global.URL + "login", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        `${Global.URL}login`, 
+        { email, password },
+        { withCredentials: true }
+      );
 
       if (response.status === 200) {
-        const { token, ...user } = response.data.data; // Desestructuración para obtener el token y el usuario
-        Cookies.set("token", token); // Guarda el token en las cookies
-        login(user, token); // Llama a la función login del contexto
-        navigate("/"); // Redirige a la página principal
+        const { token, ...user } = response.data.data;
+        login(user, token);
+        navigate("/auth");
       }
-    } catch {
-      setError("Credenciales incorrectas. Inténtalo de nuevo.");
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Credenciales incorrectas. Inténtalo de nuevo.";
+      setError(errorMessage);
     } finally {
-      setLoading(false); // Restablece el estado de carga
+      setLoading(false);
     }
   };
+
+  // Limpiar error después de 5 segundos
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(""), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
