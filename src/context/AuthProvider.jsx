@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }) => {
         const response = await axios.get(`${Global.URL}verify-token`, {
           headers: {
             Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
           },
           withCredentials: true,
         });
@@ -33,12 +34,12 @@ export const AuthProvider = ({ children }) => {
           setAuth({ ...userObj, token });
         } else {
           // Token inválido, limpiar datos
-          logout();
+          clearAuth();
         }
       } catch (error) {
         console.error("Token verification failed:", error);
         // Token inválido, limpiar datos
-        logout();
+        clearAuth();
       }
     } else {
       setAuth({});
@@ -47,18 +48,36 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   };
 
+  // Función para limpiar autenticación
+  const clearAuth = () => {
+    localStorage.removeItem("user");
+    Cookies.remove("token");
+    setAuth({});
+  };
+
   // Función para iniciar sesión
   const login = (userData, token) => {
     localStorage.setItem("user", JSON.stringify(userData));
-    Cookies.set("token", token, { expires: 7, secure: false, sameSite: 'lax' }); // 7 días de expiración
+    Cookies.set("token", token, { 
+      expires: 7, 
+      secure: window.location.protocol === 'https:', 
+      sameSite: 'lax' 
+    });
     setAuth({ ...userData, token });
   };
 
   // Función para cerrar sesión
   const logout = () => {
-    localStorage.removeItem("user");
-    Cookies.remove("token");
-    setAuth({});
+    clearAuth();
+  };
+
+  // Función para obtener headers de autorización
+  const getAuthHeaders = () => {
+    const token = auth.token || Cookies.get("token");
+    return token ? {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    } : {};
   };
 
   const value = useMemo(
@@ -68,7 +87,9 @@ export const AuthProvider = ({ children }) => {
       loading, 
       login, 
       logout,
-      token: auth.token || Cookies.get("token")
+      getAuthHeaders,
+      token: auth.token || Cookies.get("token"),
+      isAuthenticated: !!auth._id
     }),
     [auth, loading]
   );

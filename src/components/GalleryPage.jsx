@@ -8,15 +8,16 @@ import useAuth from "../hooks/useAuth";
 
 const GalleryPage = () => {
   const [userData, setUserData] = useState(null);
-  const [previewImages, setPreviewImages] = useState([]); // Solo 6 imágenes
-  const [galleryImages, setGalleryImages] = useState([]); // Todas las imágenes de las galerías
+  const [previewImages, setPreviewImages] = useState([]);
+  const [galleryImages, setGalleryImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { auth, token } = useAuth();
+  const { auth, getAuthHeaders, isAuthenticated } = useAuth();
 
-  const axiosRandomUser = async () => {
+  const fetchRandomUser = async () => {
     setLoading(true);
     setError(null);
+    
     try {
       // 1. Obtener un usuario aleatorio
       const response = await axios.get(`${Global.URL}usuario/aleatorio`);
@@ -25,22 +26,20 @@ const GalleryPage = () => {
 
       if (user?.nameUser) {
         let imagesResponse;
+        const isOwnProfile = isAuthenticated && auth.nameUser === user.nameUser;
 
         // 2. Elegir endpoint según autenticación
-        if (!auth.nameUser || auth.nameUser !== user.nameUser) {
-          imagesResponse = await axios.get(
-            `${Global.URL}publico/usuario/${user.nameUser}`
-          );
-        } else {
+        if (isOwnProfile) {
           imagesResponse = await axios.get(
             `${Global.URL}usuario/${user.nameUser}`,
             {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
+              headers: getAuthHeaders(),
               withCredentials: true,
             }
+          );
+        } else {
+          imagesResponse = await axios.get(
+            `${Global.URL}publico/usuario/${user.nameUser}`
           );
         }
 
@@ -81,14 +80,15 @@ const GalleryPage = () => {
         setGalleryImages([]);
       }
     } catch (error) {
-      setError(error.message);
+      console.error("Error fetching random user:", error);
+      setError("Error al cargar el contenido. Por favor, intenta de nuevo.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    axiosRandomUser();
+    fetchRandomUser();
   }, []);
 
   if (loading) return (
@@ -97,16 +97,30 @@ const GalleryPage = () => {
         <div className="spinner-border text-primary" role="status" style={{width: '3rem', height: '3rem'}}>
           <span className="visually-hidden">Cargando...</span>
         </div>
-        <p className="mt-3 text-muted">Cargando contenido...</p>
+        <p className="mt-3 text-muted">Descubriendo contenido increíble...</p>
       </div>
     </div>
   );
   
   if (error) return (
     <div className="container mt-5">
-      <div className="alert alert-danger text-center">
-        <i className="fas fa-exclamation-triangle me-2"></i>
-        Error: {error}
+      <div className="row justify-content-center">
+        <div className="col-md-6">
+          <div className="card border-danger">
+            <div className="card-body text-center">
+              <i className="fas fa-exclamation-triangle text-danger mb-3" style={{fontSize: '3rem'}}></i>
+              <h4 className="text-danger">¡Oops!</h4>
+              <p className="text-muted">{error}</p>
+              <button 
+                className="btn btn-primary"
+                onClick={fetchRandomUser}
+              >
+                <i className="fas fa-sync-alt me-2"></i>
+                Intentar de nuevo
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -116,6 +130,13 @@ const GalleryPage = () => {
       <div className="alert alert-warning text-center">
         <i className="fas fa-info-circle me-2"></i>
         No se pudieron cargar los datos del usuario.
+        <button 
+          className="btn btn-primary ms-3"
+          onClick={fetchRandomUser}
+        >
+          <i className="fas fa-sync-alt me-2"></i>
+          Reintentar
+        </button>
       </div>
     </div>
   );
@@ -124,11 +145,13 @@ const GalleryPage = () => {
     <div className="fade-in-up">
       <User
         userName={userData.nameUser}
-        onNext={axiosRandomUser}
-        onPrev={axiosRandomUser}
+        onNext={fetchRandomUser}
+        onPrev={fetchRandomUser}
       />
-      {/* maximo 6 imagenes */}
+      
+      {/* Máximo 6 imágenes */}
       <Image images={previewImages} userName={userData.nameUser} />
+      
       {/* Carrusel con todas las imágenes de galerías */}
       <Carousel
         galleries={userData.galleries || []}

@@ -8,15 +8,15 @@ import useDelete from "../hooks/useDelete";
 
 export const ImagePerfil = ({ images, userName, galleriesPerfil }) => {
   const [imageSrc, setImageSrc] = useState(null);
-  const { auth } = useAuth();
+  const { auth, isAuthenticated } = useAuth();
   const [showImageEdit, setShowImageEdit] = useState(false);
-  const [idImage, setIdimage] = useState(null); // Guarda el objeto o ID de la imagen
+  const [idImage, setIdimage] = useState(null);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' o 'list'
 
-  // Llamamos al hook useDelete (ya no requiere parámetros)
   const { deleteImage } = useDelete();
 
   const handleImageClick = (imagePath) => {
-    setImageSrc(`${Upload.URL}uploads/${imagePath}`); // Establece la ruta completa
+    setImageSrc(`${Upload.URL}uploads/${imagePath}`);
     const modal = new window.bootstrap.Modal(
       document.getElementById("modal-imagen")
     );
@@ -27,96 +27,187 @@ export const ImagePerfil = ({ images, userName, galleriesPerfil }) => {
     setImageSrc(null);
   };
 
-  // Maneja el clic en el botón "Modificar" y guarda la imagen a editar
   const handleEditClick = (image) => {
-    setIdimage(image); // Guarda la imagen seleccionada
-    setShowImageEdit(true); // Muestra el formulario de edición
+    setIdimage(image);
+    setShowImageEdit(true);
   };
 
-  // Manejador para eliminar la imagen utilizando la función deleteImage del hook
   const handleDeleteImage = async (url, image) => {
-    setIdimage(image);
-    try {
-      await deleteImage(url, image._id); // Pasamos la URL base y el ID de la imagen
-      // Aquí puedes agregar lógica adicional, por ejemplo, refrescar la lista de imágenes
-    } catch (error) {
-      console.error("Error al eliminar la imagen:", error);
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta imagen?')) {
+      setIdimage(image);
+      try {
+        await deleteImage(url, image._id);
+      } catch (error) {
+        console.error("Error al eliminar la imagen:", error);
+      }
     }
   };
 
-  const isOwnProfile = auth?.nameUser === userName; // Verifica si es el perfil del usuario autenticado
+  const isOwnProfile = isAuthenticated && auth?.nameUser === userName;
 
   if (images.length === 0) {
     return (
-      <div className="text-center mt-2">
-        <h3>El usuario @{userName} no tiene imágenes.</h3>
+      <div className="text-center py-5">
+        <div className="mb-4">
+          <i className="fas fa-images text-muted" style={{fontSize: '4rem'}}></i>
+        </div>
+        <h4 className="text-muted">
+          {isOwnProfile ? 'Aún no has subido imágenes' : `@${userName} no tiene imágenes`}
+        </h4>
+        <p className="text-muted">
+          {isOwnProfile ? '¡Sube tu primera imagen para comenzar!' : '¡Vuelve pronto para ver nuevo contenido!'}
+        </p>
+      </div>
+    );
+  }
+
+  if (showImageEdit) {
+    return (
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <UpdateTest
+            initialData={idImage}
+            galleries={galleriesPerfil}
+            galleryId={galleriesPerfil._id}
+          />
+        </div>
       </div>
     );
   }
 
   return (
     <>
-      {showImageEdit ? (
-        <UpdateTest
-          initialData={idImage}
-          galleries={galleriesPerfil}
-          galleryId={galleriesPerfil._id}
-        />
-      ) : (
-        <main className="container-xl py-3" id="imagenes">
-          <ul className="row list-unstyled galeria">
-            {images.map((image, index) => (
-              <li key={image._id} className="col-md-6 col-lg-4 mb-4">
-                <div className="card mx-3">
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleImageClick(image.path);
-                    }}
-                    className="images"
-                  >
-                    <img
-                      className="card-img-top img-fluid img-gallery"
-                      src={`${Upload.URL}uploads/${image.path}`}
-                      alt={`Imagen ${index + 1} de la galería`}
-                    />
-                  </a>
-                  <div className="card-body p-2">
-                    <p className="card-text mb-1">{image.name}</p>
-                    <p className="card-text mb-2">
-                      {new Date(image.createdAt).toLocaleDateString()}
-                    </p>
-                    {/* Mostrar botones solo si el usuario está autenticado y es su propio perfil */}
-                    {auth.nameUser && isOwnProfile && (
-                      <>
-                        <button
-                          className="btn btn-warning btn-md fw-bold text-white mx-2"
-                          onClick={() => handleEditClick(image)}
-                        >
-                          Modificar
-                        </button>
-                        <button
-                          className="btn btn-danger btn-md fw-bold mx-2"
-                          onClick={() =>
-                            handleDeleteImage(
-                              `${Global.URL}eliminar/imagen/`,
-                              image
-                            )
-                          }
-                        >
-                          Eliminar
-                        </button>
-                      </>
-                    )}
+      {/* Controles de vista */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="d-flex align-items-center">
+          <span className="text-muted me-3">{images.length} imagen{images.length !== 1 ? 'es' : ''}</span>
+        </div>
+        <div className="btn-group" role="group">
+          <button
+            type="button"
+            className={`btn ${viewMode === 'grid' ? 'btn-primary' : 'btn-outline-primary'} btn-sm`}
+            onClick={() => setViewMode('grid')}
+          >
+            <i className="fas fa-th"></i>
+          </button>
+          <button
+            type="button"
+            className={`btn ${viewMode === 'list' ? 'btn-primary' : 'btn-outline-primary'} btn-sm`}
+            onClick={() => setViewMode('list')}
+          >
+            <i className="fas fa-list"></i>
+          </button>
+        </div>
+      </div>
+
+      {/* Vista en cuadrícula */}
+      {viewMode === 'grid' && (
+        <div className="row g-4">
+          {images.map((image, index) => (
+            <div key={image._id} className="col-md-6 col-lg-4">
+              <div className="card h-100 hover-lift shadow-sm">
+                <div className="position-relative overflow-hidden">
+                  <img
+                    className="card-img-top img-gallery"
+                    src={`${Upload.URL}uploads/${image.path}`}
+                    alt={image.name || `Imagen ${index + 1}`}
+                    onClick={() => handleImageClick(image.path)}
+                    style={{cursor: 'pointer'}}
+                  />
+                  <div className="position-absolute top-0 end-0 m-2">
+                    <span className="badge bg-primary bg-opacity-75">
+                      <i className="fas fa-eye me-1"></i>
+                      Ver
+                    </span>
                   </div>
                 </div>
-              </li>
-            ))}
-          </ul>
-          <ImageModal imageSrc={imageSrc} onClose={handleCloseModal} />
-        </main>
+                
+                <div className="card-body d-flex flex-column">
+                  <h6 className="card-title fw-bold mb-2">
+                    {image.name || `Imagen ${index + 1}`}
+                  </h6>
+                  
+                  <div className="d-flex align-items-center mb-2 text-muted">
+                    <i className="fas fa-calendar-alt me-2"></i>
+                    <small>{new Date(image.createdAt).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}</small>
+                  </div>
+                  
+                  {isOwnProfile && (
+                    <div className="mt-auto d-flex gap-2">
+                      <button
+                        className="btn btn-warning btn-sm flex-fill"
+                        onClick={() => handleEditClick(image)}
+                      >
+                        <i className="fas fa-edit me-1"></i>
+                        Editar
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm flex-fill"
+                        onClick={() => handleDeleteImage(`${Global.URL}eliminar/imagen/`, image)}
+                      >
+                        <i className="fas fa-trash me-1"></i>
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* Vista en lista */}
+      {viewMode === 'list' && (
+        <div className="list-group">
+          {images.map((image, index) => (
+            <div key={image._id} className="list-group-item list-group-item-action">
+              <div className="row align-items-center">
+                <div className="col-md-2">
+                  <img
+                    src={`${Upload.URL}uploads/${image.path}`}
+                    className="img-fluid rounded"
+                    alt={image.name || `Imagen ${index + 1}`}
+                    onClick={() => handleImageClick(image.path)}
+                    style={{cursor: 'pointer', height: '80px', objectFit: 'cover'}}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <h6 className="mb-1 fw-bold">{image.name || `Imagen ${index + 1}`}</h6>
+                  <p className="mb-1 text-muted">
+                    <i className="fas fa-calendar-alt me-1"></i>
+                    {new Date(image.createdAt).toLocaleDateString('es-ES')}
+                  </p>
+                </div>
+                <div className="col-md-4 text-end">
+                  {isOwnProfile && (
+                    <div className="btn-group">
+                      <button
+                        className="btn btn-warning btn-sm"
+                        onClick={() => handleEditClick(image)}
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        className="btn btn-danger btn-sm"
+                        onClick={() => handleDeleteImage(`${Global.URL}eliminar/imagen/`, image)}
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      <ImageModal imageSrc={imageSrc} onClose={handleCloseModal} />
     </>
   );
 };
@@ -124,7 +215,9 @@ export const ImagePerfil = ({ images, userName, galleriesPerfil }) => {
 ImagePerfil.propTypes = {
   images: PropTypes.arrayOf(
     PropTypes.shape({
+      _id: PropTypes.string.isRequired,
       path: PropTypes.string.isRequired,
+      name: PropTypes.string,
       createdAt: PropTypes.string.isRequired,
     })
   ).isRequired,
