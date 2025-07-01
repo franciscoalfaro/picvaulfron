@@ -15,6 +15,7 @@ export const Perfil = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({ images: 0, galleries: 0, views: 0 });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const [showImageRegistration, setShowImageRegistration] = useState(false);
   const [showGalleryRegistration, setShowGalleryRegistration] = useState(false);
@@ -92,6 +93,21 @@ export const Perfil = () => {
     window.location.reload();
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
+  // Cerrar sidebar al hacer clic en el overlay
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      closeSidebar();
+    }
+  };
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center min-vh-100">
@@ -142,250 +158,305 @@ export const Perfil = () => {
 
   return (
     <>
+      {/* Overlay para cerrar sidebar en móvil */}
+      {sidebarOpen && (
+        <div 
+          className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"
+          style={{ zIndex: 1040 }}
+          onClick={handleOverlayClick}
+        ></div>
+      )}
+
       {/* Sidebar mejorado */}
-      <div id="mySidenav" className="sidenav">
-        <div className="d-flex justify-content-between align-items-center p-3 border-bottom border-light border-opacity-25">
-          <h3 className="fw-bold text-white mb-0">
-            <i className="fas fa-user-circle me-2"></i>
-            Perfil
-          </h3>
-          <button
-            className="btn btn-link text-white p-0"
-            style={{ fontSize: "24px" }}
-            onClick={() => (document.getElementById("mySidenav").style.width = "0")}
-          >
-            <i className="fas fa-times"></i>
-          </button>
+      <div 
+        className={`sidebar-enhanced ${sidebarOpen ? 'sidebar-open' : ''}`}
+        style={{ zIndex: 1050 }}
+      >
+        {/* Header del sidebar */}
+        <div className="sidebar-header">
+          <div className="d-flex align-items-center justify-content-between">
+            <div className="d-flex align-items-center">
+              <div className="sidebar-logo">
+                <i className="fas fa-user-circle"></i>
+              </div>
+              <div className="ms-3">
+                <h5 className="text-white mb-0 fw-bold">Perfil</h5>
+                <small className="text-light opacity-75">Panel de usuario</small>
+              </div>
+            </div>
+            <button
+              className="btn btn-link text-white p-0 sidebar-close-btn"
+              onClick={closeSidebar}
+            >
+              <i className="fas fa-times fs-4"></i>
+            </button>
+          </div>
         </div>
 
-        <div className="p-3">
-          <div className="text-center mb-4">
-            {userData.profileImage ? (
-              <img
-                src={`${Upload.URL}uploads/${userData.profileImage}`}
-                className="rounded-circle mb-2"
-                alt="Foto de perfil"
-                style={{ width: '60px', height: '60px', objectFit: 'cover' }}
-              />
-            ) : (
-              <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center mb-2 mx-auto" 
-                   style={{ width: '60px', height: '60px' }}>
-                <i className="fas fa-user text-white fs-4"></i>
-              </div>
-            )}
-            <h6 className="text-white mb-0">@{userData.nameUser}</h6>
+        {/* Información del usuario */}
+        <div className="sidebar-user-info">
+          <div className="text-center">
+            <div className="user-avatar-container">
+              {userData.profileImage ? (
+                <img
+                  src={`${Upload.URL}uploads/${userData.profileImage}`}
+                  className="user-avatar"
+                  alt="Foto de perfil"
+                />
+              ) : (
+                <div className="user-avatar-placeholder">
+                  <i className="fas fa-user"></i>
+                </div>
+              )}
+              <div className="user-status-indicator"></div>
+            </div>
+            <h6 className="text-white mb-1 fw-bold">@{userData.nameUser}</h6>
             <small className="text-light opacity-75">
               {isOwnProfile ? "Tu perfil" : "Visitando perfil"}
             </small>
           </div>
 
-          {/* Estadísticas */}
-          <div className="row text-center mb-4">
-            <div className="col-4">
-              <div className="text-white">
-                <div className="fw-bold fs-5">{stats.images}</div>
-                <small className="opacity-75">Imágenes</small>
+          {/* Estadísticas mejoradas */}
+          <div className="user-stats">
+            <div className="stat-item">
+              <div className="stat-icon">
+                <i className="fas fa-images"></i>
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{stats.images}</div>
+                <div className="stat-label">Imágenes</div>
               </div>
             </div>
-            <div className="col-4">
-              <div className="text-white">
-                <div className="fw-bold fs-5">{stats.galleries}</div>
-                <small className="opacity-75">Galerías</small>
+            <div className="stat-item">
+              <div className="stat-icon">
+                <i className="fas fa-layer-group"></i>
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{stats.galleries}</div>
+                <div className="stat-label">Galerías</div>
               </div>
             </div>
-            <div className="col-4">
-              <div className="text-white">
-                <div className="fw-bold fs-5">{stats.views}</div>
-                <small className="opacity-75">Vistas</small>
+            <div className="stat-item">
+              <div className="stat-icon">
+                <i className="fas fa-eye"></i>
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{stats.views}</div>
+                <div className="stat-label">Vistas</div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Navegación */}
-          <nav>
-            <a href="#imagenes" className="nav-link text-light d-flex align-items-center py-2 mb-2">
-              <i className="fas fa-images me-3"></i>
-              Imágenes
+        {/* Navegación mejorada */}
+        <nav className="sidebar-nav">
+          <div className="nav-section">
+            <div className="nav-section-title">Navegación</div>
+            <a href="#imagenes" className="nav-item" onClick={closeSidebar}>
+              <div className="nav-icon">
+                <i className="fas fa-images"></i>
+              </div>
+              <span>Imágenes</span>
+              <div className="nav-badge">{stats.images}</div>
             </a>
-            <a href="#galerias" className="nav-link text-light d-flex align-items-center py-2 mb-2">
-              <i className="fas fa-layer-group me-3"></i>
-              Galerías
+            <a href="#galerias" className="nav-item" onClick={closeSidebar}>
+              <div className="nav-icon">
+                <i className="fas fa-layer-group"></i>
+              </div>
+              <span>Galerías</span>
+              <div className="nav-badge">{stats.galleries}</div>
             </a>
+          </div>
+
+          <div className="nav-section">
+            <div className="nav-section-title">Acciones</div>
             {isAuthenticated ? (
-              <Link to="/auth" className="nav-link text-light d-flex align-items-center py-2 mb-2">
-                <i className="fas fa-home me-3"></i>
-                Inicio
+              <Link to="/auth" className="nav-item" onClick={closeSidebar}>
+                <div className="nav-icon">
+                  <i className="fas fa-home"></i>
+                </div>
+                <span>Inicio</span>
               </Link>
             ) : (
-              <Link to="/" className="nav-link text-light d-flex align-items-center py-2 mb-2">
-                <i className="fas fa-home me-3"></i>
-                Inicio
+              <Link to="/" className="nav-item" onClick={closeSidebar}>
+                <div className="nav-icon">
+                  <i className="fas fa-home"></i>
+                </div>
+                <span>Inicio</span>
               </Link>
             )}
             
             {isOwnProfile && (
               <button
-                onClick={refreshProfile}
-                className="nav-link text-light d-flex align-items-center py-2 mb-2 bg-transparent border-0 w-100"
+                onClick={() => { refreshProfile(); closeSidebar(); }}
+                className="nav-item nav-button"
               >
-                <i className="fas fa-sync-alt me-3"></i>
-                Actualizar
+                <div className="nav-icon">
+                  <i className="fas fa-sync-alt"></i>
+                </div>
+                <span>Actualizar</span>
               </button>
             )}
-            
-            {isAuthenticated && (
+          </div>
+
+          {isAuthenticated && (
+            <div className="nav-section">
+              <div className="nav-section-title">Cuenta</div>
               <button
-                onClick={handleLogout}
-                className="nav-link text-light d-flex align-items-center py-2 mb-2 bg-transparent border-0 w-100"
+                onClick={() => { handleLogout(); closeSidebar(); }}
+                className="nav-item nav-button logout-btn"
               >
-                <i className="fas fa-sign-out-alt me-3"></i>
-                Cerrar sesión
+                <div className="nav-icon">
+                  <i className="fas fa-sign-out-alt"></i>
+                </div>
+                <span>Cerrar sesión</span>
               </button>
-            )}
-          </nav>
+            </div>
+          )}
+        </nav>
+
+        {/* Footer del sidebar */}
+        <div className="sidebar-footer">
+          <div className="text-center">
+            <small className="text-light opacity-50">
+              © 2025 Repositorio Imágenes
+            </small>
+          </div>
         </div>
       </div>
 
-      {/* Botón para abrir el sidebar mejorado */}
-      <div className="position-fixed top-0 start-0 p-3" style={{ zIndex: 1000 }}>
-        <button
-          className="btn btn-primary rounded-circle shadow-lg"
-          style={{ width: '50px', height: '50px' }}
-          onClick={() => (document.getElementById("mySidenav").style.width = "300px")}
-        >
-          <i className="fas fa-bars"></i>
-        </button>
-      </div>
+      {/* Botón flotante mejorado */}
+      <button
+        className="sidebar-toggle-btn"
+        onClick={toggleSidebar}
+        aria-label="Abrir menú"
+      >
+        <i className="fas fa-bars"></i>
+        <div className="btn-ripple"></div>
+      </button>
 
       {/* Contenido principal mejorado */}
-      <div className="container-fluid px-4 py-3">
+      <div className="main-content">
         {/* Header del perfil */}
-        <div className="row mb-5">
-          <div className="col-12">
-            <div className="card border-0 shadow-sm bg-gradient-primary text-white">
-              <div className="card-body p-4">
-                <div className="row align-items-center">
-                  <div className="col-md-8">
-                    <div className="d-flex align-items-center mb-3">
-                      {userData.profileImage ? (
-                        <img
-                          src={`${Upload.URL}uploads/${userData.profileImage}`}
-                          className="rounded-circle me-4 border border-white border-3"
-                          alt="Foto de perfil"
-                          style={{ width: '100px', height: '100px', objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <div className="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-4 border border-white border-3" 
-                             style={{ width: '100px', height: '100px' }}>
-                          <i className="fas fa-user text-white fs-1"></i>
-                        </div>
-                      )}
-                      <div>
-                        <h1 className="fw-bold mb-2">
-                          {isOwnProfile ? `¡Hola, ${userData.nameUser}!` : `@${userData.nameUser}`}
-                        </h1>
-                        <p className="mb-0 opacity-90">
-                          {userData.userInfo || "Sin información adicional"}
-                        </p>
-                        <small className="opacity-75">
-                          <i className="fas fa-calendar-alt me-1"></i>
-                          Miembro desde {new Date(userData.createdAt || Date.now()).toLocaleDateString('es-ES', {
-                            year: 'numeric',
-                            month: 'long'
-                          })}
-                        </small>
-                      </div>
+        <div className="profile-header">
+          <div className="container">
+            <div className="profile-header-content">
+              <div className="profile-info">
+                <div className="profile-avatar-large">
+                  {userData.profileImage ? (
+                    <img
+                      src={`${Upload.URL}uploads/${userData.profileImage}`}
+                      alt="Foto de perfil"
+                    />
+                  ) : (
+                    <div className="profile-avatar-placeholder">
+                      <i className="fas fa-user"></i>
                     </div>
+                  )}
+                </div>
+                <div className="profile-details">
+                  <h1 className="profile-name">
+                    {isOwnProfile ? `¡Hola, ${userData.nameUser}!` : `@${userData.nameUser}`}
+                  </h1>
+                  <p className="profile-bio">
+                    {userData.userInfo || "Sin información adicional"}
+                  </p>
+                  <div className="profile-meta">
+                    <span className="meta-item">
+                      <i className="fas fa-calendar-alt me-1"></i>
+                      Miembro desde {new Date(userData.createdAt || Date.now()).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long'
+                      })}
+                    </span>
                   </div>
-                  <div className="col-md-4 text-md-end">
-                    <div className="row text-center">
-                      <div className="col-4">
-                        <div className="fw-bold fs-4">{stats.images}</div>
-                        <small>Imágenes</small>
-                      </div>
-                      <div className="col-4">
-                        <div className="fw-bold fs-4">{stats.galleries}</div>
-                        <small>Galerías</small>
-                      </div>
-                      <div className="col-4">
-                        <div className="fw-bold fs-4">{stats.views}</div>
-                        <small>Vistas</small>
-                      </div>
-                    </div>
-                  </div>
+                </div>
+              </div>
+              
+              <div className="profile-stats-large">
+                <div className="stat-card">
+                  <div className="stat-value">{stats.images}</div>
+                  <div className="stat-label">Imágenes</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{stats.galleries}</div>
+                  <div className="stat-label">Galerías</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value">{stats.views}</div>
+                  <div className="stat-label">Vistas</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sección de imágenes mejorada */}
-        <section id="imagenes" className="mb-5">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="fw-bold mb-0">
-              <i className="fas fa-images text-primary me-2"></i>
-              Imágenes
-              <span className="badge bg-primary ms-2">{stats.images}</span>
-            </h2>
-            {isOwnProfile && (
-              <button
-                className={`btn ${showImageRegistration ? 'btn-danger' : 'btn-success'} rounded-pill`}
-                onClick={toggleImageRegistration}
-              >
-                <i className={`fas ${showImageRegistration ? 'fa-times' : 'fa-plus'} me-2`}></i>
-                {showImageRegistration ? 'Cancelar' : 'Subir Imagen'}
-              </button>
-            )}
-          </div>
-          
-          {showImageRegistration ? (
-            <div className="card shadow-sm">
-              <div className="card-body">
+        {/* Contenido de secciones */}
+        <div className="container py-4">
+          {/* Sección de imágenes mejorada */}
+          <section id="imagenes" className="content-section">
+            <div className="section-header">
+              <div className="section-title">
+                <i className="fas fa-images text-primary me-2"></i>
+                <h2>Imágenes</h2>
+                <span className="section-badge">{stats.images}</span>
+              </div>
+              {isOwnProfile && (
+                <button
+                  className={`btn ${showImageRegistration ? 'btn-danger' : 'btn-success'} btn-action`}
+                  onClick={toggleImageRegistration}
+                >
+                  <i className={`fas ${showImageRegistration ? 'fa-times' : 'fa-plus'} me-2`}></i>
+                  {showImageRegistration ? 'Cancelar' : 'Subir Imagen'}
+                </button>
+              )}
+            </div>
+            
+            {showImageRegistration ? (
+              <div className="content-card">
                 <ImageRegistration galleries={userData.galleries || []} />
               </div>
-            </div>
-          ) : (
-            <ImagePerfil
-              images={userData.images || []}
-              userName={userData.nameUser}
-              galleriesPerfil={userData.galleries || []}
-            />
-          )}
-        </section>
-
-        {/* Sección de galerías mejorada */}
-        <section id="galerias" className="mb-5">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2 className="fw-bold mb-0">
-              <i className="fas fa-layer-group text-primary me-2"></i>
-              Galerías
-              <span className="badge bg-primary ms-2">{stats.galleries}</span>
-            </h2>
-            {isOwnProfile && (
-              <button
-                className={`btn ${showGalleryRegistration ? 'btn-danger' : 'btn-success'} rounded-pill`}
-                onClick={toggleGalleryRegistration}
-              >
-                <i className={`fas ${showGalleryRegistration ? 'fa-times' : 'fa-plus'} me-2`}></i>
-                {showGalleryRegistration ? 'Cancelar' : 'Crear Galería'}
-              </button>
+            ) : (
+              <ImagePerfil
+                images={userData.images || []}
+                userName={userData.nameUser}
+                galleriesPerfil={userData.galleries || []}
+              />
             )}
-          </div>
-          
-          {showGalleryRegistration ? (
-            <div className="card shadow-sm">
-              <div className="card-body">
+          </section>
+
+          {/* Sección de galerías mejorada */}
+          <section id="galerias" className="content-section">
+            <div className="section-header">
+              <div className="section-title">
+                <i className="fas fa-layer-group text-primary me-2"></i>
+                <h2>Galerías</h2>
+                <span className="section-badge">{stats.galleries}</span>
+              </div>
+              {isOwnProfile && (
+                <button
+                  className={`btn ${showGalleryRegistration ? 'btn-danger' : 'btn-success'} btn-action`}
+                  onClick={toggleGalleryRegistration}
+                >
+                  <i className={`fas ${showGalleryRegistration ? 'fa-times' : 'fa-plus'} me-2`}></i>
+                  {showGalleryRegistration ? 'Cancelar' : 'Crear Galería'}
+                </button>
+              )}
+            </div>
+            
+            {showGalleryRegistration ? (
+              <div className="content-card">
                 <CarouselRegister images={userData.images || []} />
               </div>
-            </div>
-          ) : (
-            <CarouselPerfil
-              galleries={userData.galleries || []}
-              userName={userData.nameUser}
-              images={userData.images || []}
-            />
-          )}
-        </section>
+            ) : (
+              <CarouselPerfil
+                galleries={userData.galleries || []}
+                userName={userData.nameUser}
+                images={userData.images || []}
+              />
+            )}
+          </section>
+        </div>
       </div>
     </>
   );

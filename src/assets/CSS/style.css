@@ -394,47 +394,7 @@ p {
     min-height: 100vh;
 }
 
-/* Sidebar moderno */
-.sidenav {
-    background: var(--gradient-dark) !important;
-    backdrop-filter: blur(10px);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.sidenav a {
-    color: var(--gray-300) !important;
-    padding: 1rem 2rem !important;
-    font-weight: 500 !important;
-    border-radius: var(--radius) !important;
-    margin: 0.25rem 1rem !important;
-    transition: var(--transition) !important;
-}
-
-.sidenav a:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: var(--white) !important;
-    transform: translateX(4px);
-}
-
-.text-dashboard {
-    color: var(--white) !important;
-    font-size: 1.5rem !important;
-    font-weight: 700 !important;
-    padding: 1rem 2rem !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 1rem !important;
-}
-
-.closebtn {
-    color: var(--white) !important;
-    font-size: 2rem !important;
-    transition: var(--transition) !important;
-}
-
-.closebtn:hover {
-    color: var(--error) !important;
-    transform: rotate(90deg);
-}
+/* Sidebar moderno - REMOVIDO (ahora está en sidebar.css) */
 
 /* Modal moderno */
 .modal-content {
