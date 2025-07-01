@@ -1,7 +1,7 @@
 export const Global = {
-    URL:"http://localhost:3000/api/"
+    URL:"https://localhost:3000/api/"
 }
 
 export const Upload = {
-    URL: "http://localhost:3000/"
+    URL: "https://localhost:3000/"
 }
